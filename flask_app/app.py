@@ -115,18 +115,19 @@ PREDICTION_COUNT = Counter(
 model_name = "my_model"
 def get_latest_model_version(model_name):
     client = mlflow.MlflowClient()
+    # Use search_model_versions instead of deprecated get_latest_versions
+    all_versions = client.search_model_versions(f"name='{model_name}'")
+    
+    if not all_versions:
+        return None
+    
     # First try to get Production stage model
-    latest_version = client.get_latest_versions(model_name, stages=["Production"])
-    if latest_version:
-        return latest_version[0].version
+    production_versions = [v for v in all_versions if v.current_stage == "Production"]
+    if production_versions:
+        return max(production_versions, key=lambda x: int(x.version)).version
     
     # If no Production model, get the latest version regardless of stage
-    all_versions = client.search_model_versions(f"name='{model_name}'")
-    if all_versions:
-        # Sort by version number (descending) and get the latest
-        latest = max(all_versions, key=lambda x: int(x.version))
-        return latest.version
-    return None
+    return max(all_versions, key=lambda x: int(x.version)).version
 
 model_version = get_latest_model_version(model_name)
 if model_version is None:
