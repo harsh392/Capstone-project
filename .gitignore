@@ -210,4 +210,5 @@ credentials.txt
 local_s3/
 
 data/
+!src/data/
 models/
